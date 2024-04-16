@@ -1,30 +1,50 @@
 document.addEventListener('DOMContentLoaded', () => {
     const registrationForm = document.getElementById('registrationForm');
 
-    registrationForm.addEventListener('submit', (event) => {
+    registrationForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        
-        openConfirmationWindow();
+
+        const formData = new FormData(registrationForm);
+        const requestBody = Object.fromEntries(formData);
+
+        try {
+            const response = await fetch('http://localhost:7000/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error('Error registering user');
+            }
+
+            const data = await response.json();
+            displayConfirmation(data);
+        } catch (error) {
+            console.error('Error:', error);
+
+        }
     });
 });
 
-function openConfirmationWindow() {
-    const id = document.getElementById('id').value;
-    const fullName = document.getElementById('fullName').value;
-    const address = document.getElementById('address').value;
-    const status = document.getElementById('status').value;
+function displayConfirmation(data) {
+    const confirmationContainer = document.getElementById('confirmationContainer');
 
-    const confirmationWindow = window.open("", "_blank", "width=400,height=400");
-    
-    if (confirmationWindow) {
-        confirmationWindow.document.write(`
+    if (confirmationContainer) {
+        confirmationContainer.innerHTML = `
             <h2>Confirmation Notice</h2>
-            <p>ID: ${id}</p>
-            <p>Full Name: ${fullName}</p>
-            <p>Address: ${address}</p>
-            <p>Status: ${status}</p>
-        `);
+            <p>ID: ${data.id}</p>
+            <p>Full Name: ${data.fullName}</p>
+            <p>Address: ${data.address}</p>
+            <p>Status: ${data.status}</p>
+            <p>Fee: ${data.fee}</p>
+        `;
+        confirmationContainer.style.display = 'block';
+        document.getElementById("registrationForm").style.display="none";
     } else {
-        console.error('Confirmation window failed to open');
+        console.error('Confirmation container not found or is null');
+        // Handle the error (e.g., display a message to the user)
     }
 }
